@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func decodeExport(r *bytes.Reader) (i *wasm.Export, err error) {
@@ -32,7 +32,7 @@ func decodeExport(r *bytes.Reader) (i *wasm.Export, err error) {
 	return
 }
 
-// encodeExport returns the wasm.Export encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeExport returns the wasm.Export encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#export-section%E2%91%A0
 func encodeExport(i *wasm.Export) []byte {

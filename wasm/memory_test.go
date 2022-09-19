@@ -10,7 +10,6 @@ import (
 func TestMemoryPageConsts(t *testing.T) {
 	require.Equal(t, MemoryPageSize, uint32(1)<<MemoryPageSizeInBits)
 	require.Equal(t, MemoryPageSize, uint32(1<<16))
-	require.Equal(t, MemoryLimitPages, uint32(1<<16))
 }
 
 func TestMemoryPagesToBytesNum(t *testing.T) {
@@ -20,8 +19,8 @@ func TestMemoryPagesToBytesNum(t *testing.T) {
 }
 
 func TestMemoryBytesNumToPages(t *testing.T) {
-	for _, numbytes := range []uint32{0, MemoryPageSize * 1, MemoryPageSize * 10} {
-		require.Equal(t, numbytes/MemoryPageSize, memoryBytesNumToPages(uint64(numbytes)))
+	for _, numBytes := range []uint32{0, MemoryPageSize * 1, MemoryPageSize * 10} {
+		require.Equal(t, numBytes/MemoryPageSize, memoryBytesNumToPages(uint64(numBytes)))
 	}
 }
 
@@ -45,11 +44,6 @@ func TestPagesToUnitOfBytes(t *testing.T) {
 			name:     "megs",
 			pages:    100,
 			expected: "6 Mi",
-		},
-		{
-			name:     "max memory",
-			pages:    MemoryLimitPages,
-			expected: "4 Gi",
 		},
 		{
 			name:     "max uint32",

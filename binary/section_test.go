@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestTableSection(t *testing.T) {
@@ -43,7 +44,7 @@ func TestTableSection(t *testing.T) {
 		tc := tt
 
 		t.Run(tc.name, func(t *testing.T) {
-			tables, err := decodeTableSection(bytes.NewReader(tc.input), wasm.FeatureReferenceTypes)
+			tables, err := decodeTableSection(bytes.NewReader(tc.input), wasm.CoreFeatureReferenceTypes)
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, tables)
 		})
@@ -55,7 +56,7 @@ func TestTableSection_Errors(t *testing.T) {
 		name        string
 		input       []byte
 		expectedErr string
-		features    wasm.Features
+		features    wasm.CoreFeatures
 	}{
 		{
 			name: "min and min with max",
@@ -65,7 +66,7 @@ func TestTableSection_Errors(t *testing.T) {
 				wasm.RefTypeFuncref, 0x01, 0x02, 0x03, // (table 2 3)
 			},
 			expectedErr: "at most one table allowed in module as feature \"reference-types\" is disabled",
-			features:    wasm.Features20191205,
+			features:    wasm.CoreFeaturesV1,
 		},
 	}
 
@@ -223,7 +224,7 @@ func TestDecodeDataCountSection(t *testing.T) {
 		require.Equal(t, uint32(1), *v)
 	})
 	t.Run("eof", func(t *testing.T) {
-		// EOF is fine as the datacount is optional.
+		// EOF is fine as the data count is optional.
 		_, err := decodeDataCountSection(bytes.NewReader([]byte{}))
 		require.NoError(t, err)
 	})

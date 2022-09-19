@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestEncodeGlobal(t *testing.T) {

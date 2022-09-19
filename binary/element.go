@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func ensureElementKindFuncRef(r *bytes.Reader) error {
@@ -37,14 +37,14 @@ func decodeElementInitValueVector(r *bytes.Reader) ([]*wasm.Index, error) {
 	return vec, nil
 }
 
-func decodeElementConstExprVector(r *bytes.Reader, elemType wasm.RefType, enabledFeatures wasm.Features) ([]*wasm.Index, error) {
+func decodeElementConstExprVector(r *bytes.Reader, elemType wasm.RefType, features wasm.CoreFeatures) ([]*wasm.Index, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the size of constexpr vector: %w", err)
 	}
 	vec := make([]*wasm.Index, vs)
 	for i := range vec {
-		expr, err := decodeConstantExpression(r, enabledFeatures)
+		expr, err := decodeConstantExpression(r, features)
 		if err != nil {
 			return nil, err
 		}
@@ -83,32 +83,41 @@ func decodeElementRefType(r *bytes.Reader) (ret wasm.RefType, err error) {
 const (
 	// The prefix is explained at https://www.w3.org/TR/2022/WD-wasm-core-2-20220419/binary/modules.html#element-section
 
-	// elementSegmentPrefixLegacy is the legacy prefix and is only valid one before FeatureBulkMemoryOperations.
+	// elementSegmentPrefixLegacy is the legacy prefix and is only valid one
+	// before FeatureBulkMemoryOperations.
 	elementSegmentPrefixLegacy = iota
-	// elementSegmentPrefixPassiveFuncrefValueVector is the passive element whose indexes are encoded as vec(varint), and reftype is fixed to funcref.
+	// elementSegmentPrefixPassiveFuncrefValueVector is the passive element
+	// whose indexes are encoded as vec(varint), and reftype is fixed to funcref.
 	elementSegmentPrefixPassiveFuncrefValueVector
-	// elementSegmentPrefixActiveFuncrefValueVectorWithTableIndex is the same as elementSegmentPrefixPassiveFuncrefValueVector but active and table index is encoded.
+	// elementSegmentPrefixActiveFuncrefValueVectorWithTableIndex is the same
+	// as elementSegmentPrefixPassiveFuncrefValueVector but active and table
+	// index is encoded.
 	elementSegmentPrefixActiveFuncrefValueVectorWithTableIndex
-	// elementSegmentPrefixDeclarativeFuncrefValueVector is the same as elementSegmentPrefixPassiveFuncrefValueVector but declarative.
+	// elementSegmentPrefixDeclarativeFuncrefValueVector is the same as
+	// elementSegmentPrefixPassiveFuncrefValueVector but declarative.
 	elementSegmentPrefixDeclarativeFuncrefValueVector
-	// elementSegmentPrefixActiveFuncrefConstExprVector is active whoce reftype is fixed to funcref and indexes are encoded as vec(const_expr).
+	// elementSegmentPrefixActiveFuncrefConstExprVector is active and reftype
+	// is fixed to funcref and indexes are encoded as vec(const_expr).
 	elementSegmentPrefixActiveFuncrefConstExprVector
-	// elementSegmentPrefixPassiveConstExprVector is passive whoce indexes are encoded as vec(const_expr), and reftype is encoded.
+	// elementSegmentPrefixPassiveConstExprVector is passive where indexes
+	// are encoded as vec(const_expr), and reftype is encoded.
 	elementSegmentPrefixPassiveConstExprVector
-	// elementSegmentPrefixPassiveConstExprVector is active whoce indexes are encoded as vec(const_expr), and reftype and table index are encoded.
+	// elementSegmentPrefixPassiveConstExprVector is active where indexes are
+	// encoded as vec(const_expr), and reftype and table index are encoded.
 	elementSegmentPrefixActiveConstExprVector
-	// elementSegmentPrefixDeclarativeConstExprVector is declarative whoce indexes are encoded as vec(const_expr), and reftype is encoded.
+	// elementSegmentPrefixDeclarativeConstExprVector is declarative where
+	// indexes are encoded as vec(const_expr), and reftype is encoded.
 	elementSegmentPrefixDeclarativeConstExprVector
 )
 
-func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm.ElementSegment, error) {
+func decodeElementSegment(r *bytes.Reader, features wasm.CoreFeatures) (*wasm.ElementSegment, error) {
 	prefix, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("read element prefix: %w", err)
 	}
 
 	if prefix != elementSegmentPrefixLegacy {
-		if err := enabledFeatures.Require(wasm.FeatureBulkMemoryOperations); err != nil {
+		if err := features.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 			return nil, fmt.Errorf("non-zero prefix for element segment is invalid as %w", err)
 		}
 	}
@@ -117,7 +126,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 	switch prefix {
 	case elementSegmentPrefixLegacy:
 		// Legacy prefix which is WebAssembly 1.0 compatible.
-		expr, err := decodeConstantExpression(r, enabledFeatures)
+		expr, err := decodeConstantExpression(r, features)
 		if err != nil {
 			return nil, fmt.Errorf("read expr for offset: %w", err)
 		}
@@ -157,12 +166,12 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 		}
 
 		if tableIndex != 0 {
-			if err := enabledFeatures.Require(wasm.FeatureReferenceTypes); err != nil {
+			if err := features.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 				return nil, fmt.Errorf("table index must be zero but was %d: %w", tableIndex, err)
 			}
 		}
 
-		expr, err := decodeConstantExpression(r, enabledFeatures)
+		expr, err := decodeConstantExpression(r, features)
 		if err != nil {
 			return nil, fmt.Errorf("read expr for offset: %w", err)
 		}
@@ -198,12 +207,12 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 			Mode: wasm.ElementModeDeclarative,
 		}, nil
 	case elementSegmentPrefixActiveFuncrefConstExprVector:
-		expr, err := decodeConstantExpression(r, enabledFeatures)
+		expr, err := decodeConstantExpression(r, features)
 		if err != nil {
 			return nil, fmt.Errorf("read expr for offset: %w", err)
 		}
 
-		init, err := decodeElementConstExprVector(r, wasm.RefTypeFuncref, enabledFeatures)
+		init, err := decodeElementConstExprVector(r, wasm.RefTypeFuncref, features)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +229,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 		if err != nil {
 			return nil, err
 		}
-		init, err := decodeElementConstExprVector(r, refType, enabledFeatures)
+		init, err := decodeElementConstExprVector(r, refType, features)
 		if err != nil {
 			return nil, err
 		}
@@ -236,11 +245,11 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 		}
 
 		if tableIndex != 0 {
-			if err := enabledFeatures.Require(wasm.FeatureReferenceTypes); err != nil {
+			if err := features.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 				return nil, fmt.Errorf("table index must be zero but was %d: %w", tableIndex, err)
 			}
 		}
-		expr, err := decodeConstantExpression(r, enabledFeatures)
+		expr, err := decodeConstantExpression(r, features)
 		if err != nil {
 			return nil, fmt.Errorf("read expr for offset: %w", err)
 		}
@@ -250,7 +259,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 			return nil, err
 		}
 
-		init, err := decodeElementConstExprVector(r, refType, enabledFeatures)
+		init, err := decodeElementConstExprVector(r, refType, features)
 		if err != nil {
 			return nil, err
 		}
@@ -267,7 +276,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 		if err != nil {
 			return nil, err
 		}
-		init, err := decodeElementConstExprVector(r, refType, enabledFeatures)
+		init, err := decodeElementConstExprVector(r, refType, features)
 		if err != nil {
 			return nil, err
 		}
@@ -281,7 +290,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm
 	}
 }
 
-// encodeCode returns the wasm.ElementSegment encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeCode returns the wasm.ElementSegment encoded in WebAssembly Binary Format.
 //
 // https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#element-section%E2%91%A0
 func encodeElement(e *wasm.ElementSegment) (ret []byte) {

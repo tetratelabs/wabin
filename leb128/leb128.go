@@ -84,7 +84,7 @@ func EncodeUint64(value uint64) (buf []byte) {
 		b := uint8(value & 0x7f)
 		value = value >> 7
 
-		// If there are remaining bits, the value won't be zero: Set the high-
+		// If there are remaining bits, the value won't be zero: Set the high
 		// order bit to tell the reader there are more bytes in this uint.
 		if value != 0 {
 			b |= 0x80

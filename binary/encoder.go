@@ -1,12 +1,12 @@
 package binary
 
 import (
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 var sizePrefixedName = []byte{4, 'n', 'a', 'm', 'e'}
 
-// EncodeModule implements wasm.EncodeModule for the WebAssembly 1.0 (20191205) Binary Format.
+// EncodeModule implements wasm.EncodeModule for the WebAssembly Binary Format.
 // Note: If saving to a file, the conventional extension is wasm
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-format%E2%91%A0
 func EncodeModule(m *wasm.Module) (bytes []byte) {

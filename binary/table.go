@@ -4,20 +4,20 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
-// decodeTable returns the wasm.Table decoded with the WebAssembly 1.0 (20191205) Binary Format.
+// decodeTable returns the wasm.Table decoded with the WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-table
-func decodeTable(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm.Table, error) {
+func decodeTable(r *bytes.Reader, features wasm.CoreFeatures) (*wasm.Table, error) {
 	tableType, err := r.ReadByte()
 	if err != nil {
 		return nil, fmt.Errorf("read leading byte: %v", err)
 	}
 
 	if tableType != wasm.RefTypeFuncref {
-		if err := enabledFeatures.Require(wasm.FeatureReferenceTypes); err != nil {
+		if err := features.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 			return nil, fmt.Errorf("table type funcref is invalid: %w", err)
 		}
 	}
@@ -37,7 +37,7 @@ func decodeTable(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm.Table, e
 	return &wasm.Table{Min: min, Max: max, Type: tableType}, nil
 }
 
-// encodeTable returns the wasm.Table encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeTable returns the wasm.Table encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-table
 func encodeTable(i *wasm.Table) []byte {

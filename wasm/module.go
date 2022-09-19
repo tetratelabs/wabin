@@ -14,7 +14,7 @@ import (
 // See binary.DecodeModule and text.DecodeModule
 type DecodeModule func(
 	wasm []byte,
-	enabledFeatures Features,
+	features CoreFeatures,
 	memorySizer func(minPages uint32, maxPages *uint32) (min, capacity, max uint32),
 ) (result *Module, err error)
 
@@ -41,7 +41,7 @@ type Module struct {
 	// TypeSection contains the unique FunctionType of functions imported or defined in this module.
 	//
 	// Note: Currently, there is no type ambiguity in the index as WebAssembly 1.0 only defines function type.
-	// In the future, other types may be introduced to support Features such as module linking.
+	// In the future, other types may be introduced to support CoreFeatures such as module linking.
 	//
 	// Note: In the Binary Format, this is SectionIDType.
 	//
@@ -78,7 +78,7 @@ type Module struct {
 	// For example, if there are two imported tables and one defined in this module, the table Index 3 is defined in
 	// this module at TableSection[0].
 	//
-	// Note: Version 1.0 (20191205) of the WebAssembly spec allows at most one table definition per module, so the
+	// Note: Version of the WebAssembly spec allows at most one table definition per module, so the
 	// length of the TableSection can be zero or one, and can only be one if there is no imported table.
 	//
 	// Note: In the Binary Format, this is SectionIDTable.
@@ -92,7 +92,7 @@ type Module struct {
 	// For example, if there are two imported memories and one defined in this module, the memory Index 3 is defined in
 	// this module at TableSection[0].
 	//
-	// Note: Version 1.0 (20191205) of the WebAssembly spec allows at most one memory definition per module, so the
+	// Note: Version of the WebAssembly spec allows at most one memory definition per module, so the
 	// length of the MemorySection can be zero or one, and can only be one if there is no imported memory.
 	//
 	// Note: In the Binary Format, this is SectionIDMemory.
@@ -153,7 +153,7 @@ type Module struct {
 
 	// NameSection is set when the SectionIDCustom "name" was successfully decoded from the binary format.
 	//
-	// Note: This is the only SectionIDCustom defined in the WebAssembly 1.0 (20191205) Binary Format.
+	// Note: This is the only SectionIDCustom defined in the WebAssembly Binary Format.
 	// Others are skipped as they are not used in wazero.
 	//
 	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#name-section%E2%91%A0
@@ -420,7 +420,7 @@ type NameMapAssoc struct {
 	NameMap NameMap
 }
 
-// SectionID identifies the sections of a Module in the WebAssembly 1.0 (20191205) Binary Format.
+// SectionID identifies the sections of a Module in the WebAssembly Binary Format.
 //
 // Note: these are defined in the wasm package, instead of the binary package, as a key per section is needed regardless
 // of format, and deferring to the binary type avoids confusion.

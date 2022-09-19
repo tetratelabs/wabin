@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestMemoryType(t *testing.T) {
 	zero := uint32(0)
-	max := wasm.MemoryLimitPages
 
 	tests := []struct {
 		name     string
@@ -20,13 +20,8 @@ func TestMemoryType(t *testing.T) {
 	}{
 		{
 			name:     "min 0",
-			input:    &wasm.Memory{Max: wasm.MemoryLimitPages, IsMaxEncoded: true},
-			expected: []byte{0x1, 0, 0x80, 0x80, 0x4},
-		},
-		{
-			name:     "min 0 default max",
-			input:    &wasm.Memory{Max: wasm.MemoryLimitPages},
-			expected: []byte{0x0, 0},
+			input:    &wasm.Memory{},
+			expected: []byte{0, 0},
 		},
 		{
 			name:     "min 0, max 0",
@@ -40,12 +35,12 @@ func TestMemoryType(t *testing.T) {
 		},
 		{
 			name:     "min 0, max largest",
-			input:    &wasm.Memory{Max: max, IsMaxEncoded: true},
+			input:    &wasm.Memory{Max: uint32(65536), IsMaxEncoded: true},
 			expected: []byte{0x1, 0, 0x80, 0x80, 0x4},
 		},
 		{
 			name:     "min largest max largest",
-			input:    &wasm.Memory{Min: max, Max: max, IsMaxEncoded: true},
+			input:    &wasm.Memory{Min: uint32(65536), Max: uint32(65536), IsMaxEncoded: true},
 			expected: []byte{0x1, 0x80, 0x80, 0x4, 0x80, 0x80, 0x4},
 		},
 	}
@@ -76,16 +71,6 @@ func TestDecodeMemoryType_Errors(t *testing.T) {
 			name:        "max < min",
 			input:       []byte{0x1, 0x80, 0x80, 0x4, 0},
 			expectedErr: "min 65536 pages (4 Gi) > max 0 pages (0 Ki)",
-		},
-		{
-			name:        "min > limit",
-			input:       []byte{0x0, 0xff, 0xff, 0xff, 0xff, 0xf},
-			expectedErr: "min 4294967295 pages (3 Ti) over limit of 65536 pages (4 Gi)",
-		},
-		{
-			name:        "max > limit",
-			input:       []byte{0x1, 0, 0xff, 0xff, 0xff, 0xff, 0xf},
-			expectedErr: "max 4294967295 pages (3 Ti) over limit of 65536 pages (4 Gi)",
 		},
 	}
 

@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestEncodeExport(t *testing.T) {

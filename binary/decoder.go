@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
-// DecodeModule implements wasm.DecodeModule for the WebAssembly 1.0 (20191205) Binary Format
+// DecodeModule implements wasm.DecodeModule for the WebAssembly Binary Format
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-format%E2%91%A0
-func DecodeModule(binary []byte, enabledFeatures wasm.Features) (*wasm.Module, error) {
+func DecodeModule(binary []byte, features wasm.CoreFeatures) (*wasm.Module, error) {
 	r := bytes.NewReader(binary)
 
 	// Magic number.
@@ -70,19 +70,19 @@ func DecodeModule(binary []byte, enabledFeatures wasm.Features) (*wasm.Module, e
 			}
 
 		case wasm.SectionIDType:
-			m.TypeSection, err = decodeTypeSection(enabledFeatures, r)
+			m.TypeSection, err = decodeTypeSection(features, r)
 		case wasm.SectionIDImport:
-			if m.ImportSection, err = decodeImportSection(r, enabledFeatures); err != nil {
+			if m.ImportSection, err = decodeImportSection(r, features); err != nil {
 				return nil, err // avoid re-wrapping the error.
 			}
 		case wasm.SectionIDFunction:
 			m.FunctionSection, err = decodeFunctionSection(r)
 		case wasm.SectionIDTable:
-			m.TableSection, err = decodeTableSection(r, enabledFeatures)
+			m.TableSection, err = decodeTableSection(r, features)
 		case wasm.SectionIDMemory:
 			m.MemorySection, err = decodeMemorySection(r)
 		case wasm.SectionIDGlobal:
-			if m.GlobalSection, err = decodeGlobalSection(r, enabledFeatures); err != nil {
+			if m.GlobalSection, err = decodeGlobalSection(r, features); err != nil {
 				return nil, err // avoid re-wrapping the error.
 			}
 		case wasm.SectionIDExport:
@@ -93,13 +93,13 @@ func DecodeModule(binary []byte, enabledFeatures wasm.Features) (*wasm.Module, e
 			}
 			m.StartSection, err = decodeStartSection(r)
 		case wasm.SectionIDElement:
-			m.ElementSection, err = decodeElementSection(r, enabledFeatures)
+			m.ElementSection, err = decodeElementSection(r, features)
 		case wasm.SectionIDCode:
 			m.CodeSection, err = decodeCodeSection(r)
 		case wasm.SectionIDData:
-			m.DataSection, err = decodeDataSection(r, enabledFeatures)
+			m.DataSection, err = decodeDataSection(r, features)
 		case wasm.SectionIDDataCount:
-			if err := enabledFeatures.Require(wasm.FeatureBulkMemoryOperations); err != nil {
+			if err := features.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 				return nil, fmt.Errorf("data count section not supported as %v", err)
 			}
 			m.DataCountSection, err = decodeDataCountSection(r)

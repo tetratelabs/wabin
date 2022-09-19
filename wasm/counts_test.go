@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/leb128"
+
+	"github.com/tetratelabs/wabin/leb128"
 )
 
 func TestModule_ImportFuncCount(t *testing.T) {

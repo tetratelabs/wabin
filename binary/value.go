@@ -6,8 +6,8 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 var noValType = []byte{0}
