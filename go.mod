@@ -1,4 +1,4 @@
-module github.com/tetratelabs/watzero
+module github.com/tetratelabs/wabin
 
 go 1.18
 

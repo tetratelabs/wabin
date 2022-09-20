@@ -1,21 +1,13 @@
-package watzero
+package wabin
 
 import (
 	_ "embed"
-	"testing"
+	"fmt"
+	"log"
 
-	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/binary"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/binary"
+	"github.com/tetratelabs/wabin/wasm"
 )
-
-// example holds the latest supported features as described in the comments of exampleWat
-var example = newExample()
-
-// exampleWat is different from exampleWat because the parser doesn't yet support all features.
-//
-//go:embed testdata/example.wat
-var exampleWat string
 
 func newExample() *wasm.Module {
 	three := wasm.Index(3)
@@ -87,16 +79,15 @@ func newExample() *wasm.Module {
 	}
 }
 
-func BenchmarkWat2Wasm(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		if _, err := Wat2Wasm(exampleWat); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+func Example_binary() {
+	bin := binary.EncodeModule(newExample())
 
-func TestWat2Wasm(t *testing.T) {
-	bin, err := Wat2Wasm(exampleWat)
-	require.NoError(t, err)
-	require.Equal(t, binary.EncodeModule(example), bin)
+	if mod, err := binary.DecodeModule(bin, wasm.CoreFeaturesV2); err != nil {
+		log.Panicln(err)
+	} else {
+		fmt.Println(mod.NameSection.ModuleName)
+	}
+
+	// Output:
+	// example
 }

@@ -2,11 +2,13 @@ package binary
 
 import (
 	"bytes"
+	"fmt"
 
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
-// decodeMemory returns the wasm.Memory decoded with the WebAssembly 1.0 (20191205) Binary Format.
+// decodeMemory returns the wasm.Memory decoded with the WebAssembly
+// Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-memory
 func decodeMemory(r *bytes.Reader) (*wasm.Memory, error) {
@@ -21,10 +23,15 @@ func decodeMemory(r *bytes.Reader) (*wasm.Memory, error) {
 		mem.IsMaxEncoded = true
 	}
 
+	if min > mem.Max {
+		return nil, fmt.Errorf("min %d pages (%s) > max %d pages (%s)",
+			min, wasm.PagesToUnitOfBytes(min), mem.Max, wasm.PagesToUnitOfBytes(mem.Max))
+	}
+
 	return mem, nil
 }
 
-// encodeMemory returns the wasm.Memory encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeMemory returns the wasm.Memory encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-memory
 func encodeMemory(i *wasm.Memory) []byte {

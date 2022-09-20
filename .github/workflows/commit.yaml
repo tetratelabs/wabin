@@ -1,0 +1,68 @@
+name: Test
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+
+env:  # Update this prior to requiring a higher minor version in go.mod
+  GO_VERSION: "1.18"  # 1.xx == latest patch of 1.xx
+
+defaults:
+  run:  # use bash for all operating systems unless overridden
+    shell: bash
+
+jobs:
+  check:
+    name: Pre-commit check, Go-${{ matrix.go-version }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:  # use latest available versions and be consistent on all workflows!
+        go-version:
+        - "1.18" # == ${{ env.GO_VERSION }} because matrix cannot expand env variables
+        - "1.19"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - run: make check
+
+  test_amd64:
+    name: amd64, ${{ matrix.os }}, Go-${{ matrix.go-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false  # don't fail fast as sometimes failures are arch/OS specific
+      matrix:  # use latest available versions and be consistent on all workflows!
+        os: [ubuntu-20.04, macos-12, windows-2022]
+        go-version:
+        - "1.18" # == ${{ env.GO_VERSION }} because matrix cannot expand env variables
+        - "1.19"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - run: make test
+
+      - name: "Generate coverage report"  # only once (not per OS)
+        if: runner.os == 'Linux'
+        run: make coverage
+
+      - name: "Upload coverage report"  # only on main push and only once (not per OS)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && runner.os == 'Linux'
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash)

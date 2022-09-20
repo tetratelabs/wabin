@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
-func decodeTypeSection(enabledFeatures wasm.Features, r *bytes.Reader) ([]*wasm.FunctionType, error) {
+func decodeTypeSection(features wasm.CoreFeatures, r *bytes.Reader) ([]*wasm.FunctionType, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -17,14 +17,14 @@ func decodeTypeSection(enabledFeatures wasm.Features, r *bytes.Reader) ([]*wasm.
 
 	result := make([]*wasm.FunctionType, vs)
 	for i := uint32(0); i < vs; i++ {
-		if result[i], err = decodeFunctionType(enabledFeatures, r); err != nil {
+		if result[i], err = decodeFunctionType(features, r); err != nil {
 			return nil, fmt.Errorf("read %d-th type: %v", i, err)
 		}
 	}
 	return result, nil
 }
 
-func decodeImportSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.Import, error) {
+func decodeImportSection(r *bytes.Reader, features wasm.CoreFeatures) ([]*wasm.Import, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -32,7 +32,7 @@ func decodeImportSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*was
 
 	result := make([]*wasm.Import, vs)
 	for i := uint32(0); i < vs; i++ {
-		if result[i], err = decodeImport(r, i, enabledFeatures); err != nil {
+		if result[i], err = decodeImport(r, i, features); err != nil {
 			return nil, err
 		}
 	}
@@ -54,20 +54,20 @@ func decodeFunctionSection(r *bytes.Reader) ([]uint32, error) {
 	return result, err
 }
 
-func decodeTableSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.Table, error) {
+func decodeTableSection(r *bytes.Reader, features wasm.CoreFeatures) ([]*wasm.Table, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("error reading size")
 	}
 	if vs > 1 {
-		if err := enabledFeatures.Require(wasm.FeatureReferenceTypes); err != nil {
+		if err := features.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 			return nil, fmt.Errorf("at most one table allowed in module as %w", err)
 		}
 	}
 
 	ret := make([]*wasm.Table, vs)
 	for i := range ret {
-		table, err := decodeTable(r, enabledFeatures)
+		table, err := decodeTable(r, features)
 		if err != nil {
 			return nil, err
 		}
@@ -88,7 +88,7 @@ func decodeMemorySection(r *bytes.Reader) (*wasm.Memory, error) {
 	return decodeMemory(r)
 }
 
-func decodeGlobalSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.Global, error) {
+func decodeGlobalSection(r *bytes.Reader, features wasm.CoreFeatures) ([]*wasm.Global, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -96,7 +96,7 @@ func decodeGlobalSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*was
 
 	result := make([]*wasm.Global, vs)
 	for i := uint32(0); i < vs; i++ {
-		if result[i], err = decodeGlobal(r, enabledFeatures); err != nil {
+		if result[i], err = decodeGlobal(r, features); err != nil {
 			return nil, fmt.Errorf("global[%d]: %w", i, err)
 		}
 	}
@@ -134,7 +134,7 @@ func decodeStartSection(r *bytes.Reader) (*wasm.Index, error) {
 	return &vs, nil
 }
 
-func decodeElementSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.ElementSegment, error) {
+func decodeElementSection(r *bytes.Reader, features wasm.CoreFeatures) ([]*wasm.ElementSegment, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -142,7 +142,7 @@ func decodeElementSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wa
 
 	result := make([]*wasm.ElementSegment, vs)
 	for i := uint32(0); i < vs; i++ {
-		if result[i], err = decodeElementSegment(r, enabledFeatures); err != nil {
+		if result[i], err = decodeElementSegment(r, features); err != nil {
 			return nil, fmt.Errorf("read element: %w", err)
 		}
 	}
@@ -164,7 +164,7 @@ func decodeCodeSection(r *bytes.Reader) ([]*wasm.Code, error) {
 	return result, nil
 }
 
-func decodeDataSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.DataSegment, error) {
+func decodeDataSection(r *bytes.Reader, features wasm.CoreFeatures) ([]*wasm.DataSegment, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -172,7 +172,7 @@ func decodeDataSection(r *bytes.Reader, enabledFeatures wasm.Features) ([]*wasm.
 
 	result := make([]*wasm.DataSegment, vs)
 	for i := uint32(0); i < vs; i++ {
-		if result[i], err = decodeDataSegment(r, enabledFeatures); err != nil {
+		if result[i], err = decodeDataSegment(r, features); err != nil {
 			return nil, fmt.Errorf("read data segment: %w", err)
 		}
 	}
@@ -188,14 +188,16 @@ func decodeDataCountSection(r *bytes.Reader) (count *uint32, err error) {
 	return &v, nil
 }
 
-// encodeSection encodes the sectionID, the size of its contents in bytes, followed by the contents.
+// encodeSection encodes the sectionID, the size of its contents in bytes,
+// followed by the contents.
+//
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#sections%E2%91%A0
 func encodeSection(sectionID wasm.SectionID, contents []byte) []byte {
 	return append([]byte{sectionID}, encodeSizePrefixed(contents)...)
 }
 
-// encodeTypeSection encodes a wasm.SectionIDType for the given imports in WebAssembly 1.0 (20191205) Binary
-// Format.
+// encodeTypeSection encodes a wasm.SectionIDType for the given imports in
+// WebAssembly Binary Format.
 //
 // See encodeFunctionType
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#type-section%E2%91%A0
@@ -207,8 +209,8 @@ func encodeTypeSection(types []*wasm.FunctionType) []byte {
 	return encodeSection(wasm.SectionIDType, contents)
 }
 
-// encodeImportSection encodes a wasm.SectionIDImport for the given imports in WebAssembly 1.0 (20191205) Binary
-// Format.
+// encodeImportSection encodes a wasm.SectionIDImport for the given imports in
+// WebAssembly Binary Format.
 //
 // See encodeImport
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#import-section%E2%91%A0
@@ -220,8 +222,8 @@ func encodeImportSection(imports []*wasm.Import) []byte {
 	return encodeSection(wasm.SectionIDImport, contents)
 }
 
-// encodeFunctionSection encodes a wasm.SectionIDFunction for the type indices associated with module-defined
-// functions in WebAssembly 1.0 (20191205) Binary Format.
+// encodeFunctionSection encodes a wasm.SectionIDFunction for the type indices
+// associated with module-defined functions in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#function-section%E2%91%A0
 func encodeFunctionSection(typeIndices []wasm.Index) []byte {
@@ -232,8 +234,8 @@ func encodeFunctionSection(typeIndices []wasm.Index) []byte {
 	return encodeSection(wasm.SectionIDFunction, contents)
 }
 
-// encodeCodeSection encodes a wasm.SectionIDCode for the module-defined function in WebAssembly 1.0 (20191205)
-// Binary Format.
+// encodeCodeSection encodes a wasm.SectionIDCode for the module-defined
+// function in WebAssembly Binary Format.
 //
 // See encodeCode
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#code-section%E2%91%A0
@@ -245,21 +247,21 @@ func encodeCodeSection(code []*wasm.Code) []byte {
 	return encodeSection(wasm.SectionIDCode, contents)
 }
 
-// encodeTableSection encodes a wasm.SectionIDTable for the module-defined function in WebAssembly 1.0
-// (20191205) Binary Format.
+// encodeTableSection encodes a wasm.SectionIDTable for the module-defined
+// function in WebAssembly Binary Format.
 //
 // See encodeTable
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#table-section%E2%91%A0
 func encodeTableSection(tables []*wasm.Table) []byte {
-	var contents []byte = leb128.EncodeUint32(uint32(len(tables)))
+	var contents = leb128.EncodeUint32(uint32(len(tables)))
 	for _, table := range tables {
 		contents = append(contents, encodeTable(table)...)
 	}
 	return encodeSection(wasm.SectionIDTable, contents)
 }
 
-// encodeMemorySection encodes a wasm.SectionIDMemory for the module-defined function in WebAssembly 1.0
-// (20191205) Binary Format.
+// encodeMemorySection encodes a wasm.SectionIDMemory for the module-defined
+// function in WebAssembly Binary Format.
 //
 // See encodeMemory
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#memory-section%E2%91%A0
@@ -268,8 +270,8 @@ func encodeMemorySection(memory *wasm.Memory) []byte {
 	return encodeSection(wasm.SectionIDMemory, contents)
 }
 
-// encodeGlobalSection encodes a wasm.SectionIDGlobal for the given globals in WebAssembly 1.0 (20191205) Binary
-// Format.
+// encodeGlobalSection encodes a wasm.SectionIDGlobal for the given globals in
+// WebAssembly Binary Format.
 //
 // See encodeGlobal
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#global-section%E2%91%A0
@@ -281,8 +283,8 @@ func encodeGlobalSection(globals []*wasm.Global) []byte {
 	return encodeSection(wasm.SectionIDGlobal, contents)
 }
 
-// encodeExportSection encodes a wasm.SectionIDExport for the given exports in WebAssembly 1.0 (20191205) Binary
-// Format.
+// encodeExportSection encodes a wasm.SectionIDExport for the given exports in
+// WebAssembly Binary Format.
 //
 // See encodeExport
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#export-section%E2%91%A0
@@ -294,16 +296,16 @@ func encodeExportSection(exports []*wasm.Export) []byte {
 	return encodeSection(wasm.SectionIDExport, contents)
 }
 
-// encodeStartSection encodes a wasm.SectionIDStart for the given function index in WebAssembly 1.0 (20191205)
-// Binary Format.
+// encodeStartSection encodes a wasm.SectionIDStart for the given function
+// index in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#start-section%E2%91%A0
 func encodeStartSection(funcidx wasm.Index) []byte {
 	return encodeSection(wasm.SectionIDStart, leb128.EncodeUint32(funcidx))
 }
 
-// encodeEelementSection encodes a wasm.SectionIDElement for the elements in WebAssembly 1.0 (20191205)
-// Binary Format.
+// encodeElementSection encodes a wasm.SectionIDElement for the elements in
+// WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#element-section%E2%91%A0
 func encodeElementSection(elements []*wasm.ElementSegment) []byte {

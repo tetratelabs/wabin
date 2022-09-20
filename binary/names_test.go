@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestEncodeNameSectionData(t *testing.T) {

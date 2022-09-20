@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
-// decodeGlobal returns the wasm.Global decoded with the WebAssembly 1.0 (20191205) Binary Format.
+// decodeGlobal returns the wasm.Global decoded with the WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-global
-func decodeGlobal(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm.Global, error) {
+func decodeGlobal(r *bytes.Reader, features wasm.CoreFeatures) (*wasm.Global, error) {
 	gt, err := decodeGlobalType(r)
 	if err != nil {
 		return nil, err
 	}
 
-	init, err := decodeConstantExpression(r, enabledFeatures)
+	init, err := decodeConstantExpression(r, features)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func decodeGlobal(r *bytes.Reader, enabledFeatures wasm.Features) (*wasm.Global,
 	return &wasm.Global{Type: gt, Init: init}, nil
 }
 
-// decodeGlobalType returns the wasm.GlobalType decoded with the WebAssembly 1.0 (20191205) Binary Format.
+// decodeGlobalType returns the wasm.GlobalType decoded with the WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-globaltype
 func decodeGlobalType(r *bytes.Reader) (*wasm.GlobalType, error) {
@@ -52,7 +52,7 @@ func decodeGlobalType(r *bytes.Reader) (*wasm.GlobalType, error) {
 	return ret, nil
 }
 
-// encodeGlobal returns the wasm.Global encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeGlobal returns the wasm.Global encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#global-section%E2%91%A0
 func encodeGlobal(g *wasm.Global) (data []byte) {

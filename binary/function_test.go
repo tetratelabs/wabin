@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestFunctionType(t *testing.T) {
@@ -82,7 +83,7 @@ func TestFunctionType(t *testing.T) {
 		})
 
 		t.Run(fmt.Sprintf("decode - %s", tc.name), func(t *testing.T) {
-			binary, err := decodeFunctionType(wasm.Features20220419, bytes.NewReader(b))
+			binary, err := decodeFunctionType(wasm.CoreFeaturesV2, bytes.NewReader(b))
 			require.NoError(t, err)
 			require.Equal(t, binary, tc.input)
 		})
@@ -92,10 +93,10 @@ func TestFunctionType(t *testing.T) {
 func TestDecodeFunctionType_Errors(t *testing.T) {
 	i32, i64 := wasm.ValueTypeI32, wasm.ValueTypeI64
 	tests := []struct {
-		name            string
-		input           []byte
-		enabledFeatures wasm.Features
-		expectedErr     string
+		name        string
+		input       []byte
+		features    wasm.CoreFeatures
+		expectedErr string
 	}{
 		{
 			name:        "undefined param no result",
@@ -133,7 +134,7 @@ func TestDecodeFunctionType_Errors(t *testing.T) {
 		tc := tt
 
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := decodeFunctionType(wasm.Features20191205, bytes.NewReader(tc.input))
+			_, err := decodeFunctionType(wasm.CoreFeaturesV1, bytes.NewReader(tc.input))
 			require.EqualError(t, err, tc.expectedErr)
 		})
 	}

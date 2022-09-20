@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func decodeImport(
 	r *bytes.Reader,
 	idx uint32,
-	enabledFeatures wasm.Features,
+	features wasm.CoreFeatures,
 ) (i *wasm.Import, err error) {
 	i = &wasm.Import{}
 	if i.Module, _, err = decodeUTF8(r, "import module"); err != nil {
@@ -31,7 +31,7 @@ func decodeImport(
 	case wasm.ExternTypeFunc:
 		i.DescFunc, _, err = leb128.DecodeUint32(r)
 	case wasm.ExternTypeTable:
-		i.DescTable, err = decodeTable(r, enabledFeatures)
+		i.DescTable, err = decodeTable(r, features)
 	case wasm.ExternTypeMemory:
 		i.DescMem, err = decodeMemory(r)
 	case wasm.ExternTypeGlobal:
@@ -45,7 +45,7 @@ func decodeImport(
 	return
 }
 
-// encodeImport returns the wasm.Import encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeImport returns the wasm.Import encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-import
 func encodeImport(i *wasm.Import) []byte {

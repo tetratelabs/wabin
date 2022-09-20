@@ -6,19 +6,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestFeatures_ZeroIsInvalid reminds maintainers that a bitset cannot use zero as a flag!
+// TestCoreFeatures_ZeroIsInvalid reminds maintainers that a bitset cannot use zero as a flag!
 // This is why we start iota with 1.
-func TestFeatures_ZeroIsInvalid(t *testing.T) {
-	f := Features(0)
-	f = f.Set(0, true)
-	require.False(t, f.Get(0))
+func TestCoreFeatures_ZeroIsInvalid(t *testing.T) {
+	f := CoreFeatures(0)
+	f = f.SetEnabled(0, true)
+	require.False(t, f.IsEnabled(0))
 }
 
-// TestFeatures tests the bitset works as expected
-func TestFeatures(t *testing.T) {
+// TestCoreFeatures tests the bitset works as expected
+func TestCoreFeatures(t *testing.T) {
 	tests := []struct {
 		name    string
-		feature Features
+		feature CoreFeatures
 	}{
 		{
 			name:    "one is the smallest flag",
@@ -34,36 +34,36 @@ func TestFeatures(t *testing.T) {
 		tc := tt
 
 		t.Run(tc.name, func(t *testing.T) {
-			f := Features(0)
+			f := CoreFeatures(0)
 
 			// Defaults to false
-			require.False(t, f.Get(tc.feature))
+			require.False(t, f.IsEnabled(tc.feature))
 
 			// Set true makes it true
-			f = f.Set(tc.feature, true)
-			require.True(t, f.Get(tc.feature))
+			f = f.SetEnabled(tc.feature, true)
+			require.True(t, f.IsEnabled(tc.feature))
 
 			// Set false makes it false again
-			f = f.Set(tc.feature, false)
-			require.False(t, f.Get(tc.feature))
+			f = f.SetEnabled(tc.feature, false)
+			require.False(t, f.IsEnabled(tc.feature))
 		})
 	}
 }
 
-func TestFeatures_String(t *testing.T) {
+func TestCoreFeatures_String(t *testing.T) {
 	tests := []struct {
 		name     string
-		feature  Features
+		feature  CoreFeatures
 		expected string
 	}{
 		{name: "none", feature: 0, expected: ""},
-		{name: "mutable-global", feature: FeatureMutableGlobal, expected: "mutable-global"},
-		{name: "sign-extension-ops", feature: FeatureSignExtensionOps, expected: "sign-extension-ops"},
-		{name: "multi-value", feature: FeatureMultiValue, expected: "multi-value"},
-		{name: "simd", feature: FeatureSIMD, expected: "simd"},
-		{name: "features", feature: FeatureMutableGlobal | FeatureMultiValue, expected: "multi-value|mutable-global"},
+		{name: "mutable-global", feature: CoreFeatureMutableGlobal, expected: "mutable-global"},
+		{name: "sign-extension-ops", feature: CoreFeatureSignExtensionOps, expected: "sign-extension-ops"},
+		{name: "multi-value", feature: CoreFeatureMultiValue, expected: "multi-value"},
+		{name: "simd", feature: CoreFeatureSIMD, expected: "simd"},
+		{name: "features", feature: CoreFeatureMutableGlobal | CoreFeatureMultiValue, expected: "multi-value|mutable-global"},
 		{name: "undefined", feature: 1 << 63, expected: ""},
-		{name: "2.0", feature: Features20220419,
+		{name: "2.0", feature: CoreFeaturesV2,
 			expected: "bulk-memory-operations|multi-value|mutable-global|" +
 				"nontrapping-float-to-int-conversion|reference-types|sign-extension-ops|simd"},
 	}
@@ -76,23 +76,23 @@ func TestFeatures_String(t *testing.T) {
 	}
 }
 
-func TestFeatures_Require(t *testing.T) {
+func TestCoreFeatures_Require(t *testing.T) {
 	tests := []struct {
 		name        string
-		feature     Features
+		feature     CoreFeatures
 		expectedErr string
 	}{
 		{name: "none", feature: 0, expectedErr: "feature \"mutable-global\" is disabled"},
-		{name: "mutable-global", feature: FeatureMutableGlobal},
-		{name: "sign-extension-ops", feature: FeatureSignExtensionOps, expectedErr: "feature \"mutable-global\" is disabled"},
-		{name: "multi-value", feature: FeatureMultiValue, expectedErr: "feature \"mutable-global\" is disabled"},
+		{name: "mutable-global", feature: CoreFeatureMutableGlobal},
+		{name: "sign-extension-ops", feature: CoreFeatureSignExtensionOps, expectedErr: "feature \"mutable-global\" is disabled"},
+		{name: "multi-value", feature: CoreFeatureMultiValue, expectedErr: "feature \"mutable-global\" is disabled"},
 		{name: "undefined", feature: 1 << 63, expectedErr: "feature \"mutable-global\" is disabled"},
 	}
 
 	for _, tt := range tests {
 		tc := tt
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.feature.Require(FeatureMutableGlobal)
+			err := tc.feature.RequireEnabled(CoreFeatureMutableGlobal)
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)
 			} else {

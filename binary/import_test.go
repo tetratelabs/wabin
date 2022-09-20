@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/watzero/wasm"
+
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func TestEncodeImport(t *testing.T) {
@@ -131,21 +132,6 @@ func TestEncodeImport(t *testing.T) {
 				0x06, 'm', 'e', 'm', 'o', 'r', 'y',
 				wasm.ExternTypeMemory,
 				0x1, 0x1, 0x2, // Limit with max.
-			},
-		},
-		{
-			name: "memory - defaultt max",
-			input: &wasm.Import{
-				Type:    wasm.ExternTypeMemory,
-				Module:  "my",
-				Name:    "memory",
-				DescMem: &wasm.Memory{Min: 1, Max: wasm.MemoryLimitPages, IsMaxEncoded: false},
-			},
-			expected: []byte{
-				0x02, 'm', 'y',
-				0x06, 'm', 'e', 'm', 'o', 'r', 'y',
-				wasm.ExternTypeMemory,
-				0x0, 0x1, // Limit without max.
 			},
 		},
 	}

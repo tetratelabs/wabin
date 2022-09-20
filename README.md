@@ -1,5 +1,6 @@
-# watzero
+# wabin: WebAssembly Binary Format in Go
 
-watzero extracts functionality from a canceled WebAssembly Text Format feature
-in wazero. This is not yet tested, and will only continue based on community
-demand and help. Otherwise, it will be archived.
+wabin includes WebAssembly an WebAssembly data model and binary encoder. Most
+won't use this library. It mainly supports advanced manipulation of WebAssembly
+binaries prior to instantiation with wazero. Notably, this has no dependencies,
+so is cleaner to use in Go projects.

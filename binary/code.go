@@ -6,8 +6,8 @@ import (
 	"io"
 	"math"
 
-	"github.com/tetratelabs/watzero/leb128"
-	"github.com/tetratelabs/watzero/wasm"
+	"github.com/tetratelabs/wabin/leb128"
+	"github.com/tetratelabs/wabin/wasm"
 )
 
 func decodeCode(r *bytes.Reader) (*wasm.Code, error) {
@@ -79,7 +79,7 @@ func decodeCode(r *bytes.Reader) (*wasm.Code, error) {
 	return &wasm.Code{Body: body, LocalTypes: localTypes}, nil
 }
 
-// encodeCode returns the wasm.Code encoded in WebAssembly 1.0 (20191205) Binary Format.
+// encodeCode returns the wasm.Code encoded in WebAssembly Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-code
 func encodeCode(c *wasm.Code) []byte {

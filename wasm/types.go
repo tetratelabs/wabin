@@ -14,7 +14,7 @@ import (
 //   - ValueTypeI64 - uint64(int64)
 //   - ValueTypeF32 - EncodeF32 DecodeF32 from float32
 //   - ValueTypeF64 - EncodeF64 DecodeF64 from float64
-//   - ValueTypeExternref - unintptr(unsafe.Pointer(p)) where p is any pointer type in Go (e.g. *string)
+//   - ValueTypeExternref - uintptr(unsafe.Pointer(p)) where p is any pointer type in Go (e.g. *string)
 //
 // Ex. Given a Text Format type use (param i64) (result i64), no conversion is necessary.
 //
@@ -41,7 +41,7 @@ const (
 	// ValueTypeF64 is a 64-bit floating point number.
 	ValueTypeF64 ValueType = 0x7c
 
-	// ValueTypeExternref is a externref type.
+	// ValueTypeExternref is an externref type.
 	//
 	// Note: in wazero, externref type value are opaque raw 64-bit pointers,
 	// and the ValueTypeExternref type in the signature will be translated as
@@ -100,17 +100,17 @@ const (
 
 // The below are exported to consolidate parsing behavior for external types.
 const (
-	// ExternTypeFuncName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeFunc.
+	// ExternTypeFuncName is the name of the WebAssembly Text Format field for ExternTypeFunc.
 	ExternTypeFuncName = "func"
-	// ExternTypeTableName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeTable.
+	// ExternTypeTableName is the name of the WebAssembly Text Format field for ExternTypeTable.
 	ExternTypeTableName = "table"
-	// ExternTypeMemoryName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeMemory.
+	// ExternTypeMemoryName is the name of the WebAssembly Text Format field for ExternTypeMemory.
 	ExternTypeMemoryName = "memory"
-	// ExternTypeGlobalName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeGlobal.
+	// ExternTypeGlobalName is the name of the WebAssembly Text Format field for ExternTypeGlobal.
 	ExternTypeGlobalName = "global"
 )
 
-// ExternTypeName returns the name of the WebAssembly 1.0 (20191205) Text Format field of the given type.
+// ExternTypeName returns the name of the WebAssembly Text Format field of the given type.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#exports%E2%91%A4
 func ExternTypeName(et ExternType) string {
