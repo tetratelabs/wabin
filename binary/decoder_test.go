@@ -87,17 +87,24 @@ func TestDecodeModule(t *testing.T) {
 		})
 	}
 
-	t.Run("skips custom section", func(t *testing.T) {
+	t.Run("reads custom sections", func(t *testing.T) {
 		input := append(append(Magic, version...),
 			wasm.SectionIDCustom, 0xf, // 15 bytes in this section
 			0x04, 'm', 'e', 'm', 'e',
 			1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
 		m, e := DecodeModule(input, wasm.CoreFeaturesV1)
 		require.NoError(t, e)
-		require.Equal(t, &wasm.Module{}, m)
+		require.Equal(t, &wasm.Module{
+			CustomSections: []*wasm.CustomSection{
+				{
+					Name: "meme",
+					Data: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+				},
+			},
+		}, m)
 	})
 
-	t.Run("skips custom section, but not name", func(t *testing.T) {
+	t.Run("read custom sections and name separately", func(t *testing.T) {
 		input := append(append(Magic, version...),
 			wasm.SectionIDCustom, 0xf, // 15 bytes in this section
 			0x04, 'm', 'e', 'm', 'e',
@@ -109,7 +116,15 @@ func TestDecodeModule(t *testing.T) {
 			's', 'i', 'm', 'p', 'l', 'e')
 		m, e := DecodeModule(input, wasm.CoreFeaturesV1)
 		require.NoError(t, e)
-		require.Equal(t, &wasm.Module{NameSection: &wasm.NameSection{ModuleName: "simple"}}, m)
+		require.Equal(t, &wasm.Module{
+			NameSection: &wasm.NameSection{ModuleName: "simple"},
+			CustomSections: []*wasm.CustomSection{
+				{
+					Name: "meme",
+					Data: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+				},
+			},
+		}, m)
 	})
 	t.Run("data count section disabled", func(t *testing.T) {
 		input := append(append(Magic, version...),

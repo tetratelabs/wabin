@@ -154,11 +154,16 @@ type Module struct {
 	// NameSection is set when the SectionIDCustom "name" was successfully decoded from the binary format.
 	//
 	// Note: This is the only SectionIDCustom defined in the WebAssembly Binary Format.
-	// Others are skipped as they are not used in wazero.
+	// Others are read into CustomSections.
 	//
 	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#name-section%E2%91%A0
 	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#custom-section%E2%91%A0
 	NameSection *NameSection
+
+	// CustomSections are set when the SectionIDCustom other than "name" were successfully decoded from the binary format.
+	//
+	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#custom-section%E2%91%A0
+	CustomSections []*CustomSection
 }
 
 // Index is the offset in an index namespace, not necessarily an absolute position in a Module section. This is because
@@ -391,6 +396,12 @@ type NameSection struct {
 	// Note: LocalNames are only used for debugging. At runtime, locals are called based on raw numeric index.
 	// Note: This can be nil for any reason including configuration.
 	LocalNames IndirectNameMap
+}
+
+// CustomSection contains the name and raw data of a custom section.
+type CustomSection struct {
+	Name string
+	Data []byte
 }
 
 // NameMap associates an index with any associated names.
