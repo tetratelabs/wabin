@@ -70,7 +70,7 @@ func TestDecodeMemoryType_Errors(t *testing.T) {
 		{
 			name:        "max < min && max == 0",
 			input:       []byte{0x1, 0x80, 0x80, 0x4, 0},
-			expectedErr: "",
+			expectedErr: "min 65536 pages (4 Gi) > max 0 pages (0 Ki)",
 		},
 		{
 			name:        "max < min && max != 0",
@@ -84,11 +84,7 @@ func TestDecodeMemoryType_Errors(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := decodeMemory(bytes.NewReader(tc.input))
-			if tc.expectedErr != "" {
-				require.EqualError(t, err, tc.expectedErr)
-			} else {
-				require.NoError(t, err)
-			}
+			require.EqualError(t, err, tc.expectedErr)
 		})
 	}
 }
