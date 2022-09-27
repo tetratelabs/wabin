@@ -21,11 +21,11 @@ func decodeMemory(r *bytes.Reader) (*wasm.Memory, error) {
 	if maxP != nil {
 		mem.Max = *maxP
 		mem.IsMaxEncoded = true
-	}
 
-	if min > mem.Max {
-		return nil, fmt.Errorf("min %d pages (%s) > max %d pages (%s)",
-			min, wasm.PagesToUnitOfBytes(min), mem.Max, wasm.PagesToUnitOfBytes(mem.Max))
+		if min > mem.Max {
+			return nil, fmt.Errorf("min %d pages (%s) > max %d pages (%s)",
+				min, wasm.PagesToUnitOfBytes(min), mem.Max, wasm.PagesToUnitOfBytes(mem.Max))
+		}
 	}
 
 	return mem, nil

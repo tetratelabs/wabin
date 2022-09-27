@@ -68,9 +68,14 @@ func TestDecodeMemoryType_Errors(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name:        "max < min",
+			name:        "max < min && max == 0",
 			input:       []byte{0x1, 0x80, 0x80, 0x4, 0},
 			expectedErr: "min 65536 pages (4 Gi) > max 0 pages (0 Ki)",
+		},
+		{
+			name:        "max < min && max != 0",
+			input:       []byte{0x1, 0x80, 0x80, 0x4, 1},
+			expectedErr: "min 65536 pages (4 Gi) > max 1 pages (64 Ki)",
 		},
 	}
 

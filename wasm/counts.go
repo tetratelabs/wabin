@@ -47,10 +47,11 @@ func (m *Module) importCount(et ExternType) (res uint32) {
 func (m *Module) SectionElementCount(sectionID SectionID) uint32 { // element as in vector elements!
 	switch sectionID {
 	case SectionIDCustom:
+		numCustomSections := uint32(len(m.CustomSections))
 		if m.NameSection != nil {
-			return 1
+			numCustomSections++
 		}
-		return 0
+		return numCustomSections
 	case SectionIDType:
 		return uint32(len(m.TypeSection))
 	case SectionIDImport:

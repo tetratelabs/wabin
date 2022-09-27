@@ -327,3 +327,16 @@ func encodeDataSection(datum []*wasm.DataSegment) []byte {
 	}
 	return encodeSection(wasm.SectionIDData, contents)
 }
+
+// encodeCustomSection encodes a wasm.SectionIDCustom for the data in WebAssembly 1.0 (20191205)
+// Binary Format. This is used for custom sections that are **not** associated with the "name" key.
+//
+// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#custom-section%E2%91%A0
+func encodeCustomSection(c *wasm.CustomSection) (data []byte) {
+	data = make([]byte, 0, 1+len(c.Name)+len(c.Data))
+	l := byte(len(c.Name))
+	data = append(data, l)
+	data = append(data, []byte(c.Name)...)
+	data = append(data, c.Data...)
+	return
+}

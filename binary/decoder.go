@@ -58,15 +58,16 @@ func DecodeModule(binary []byte, features wasm.CoreFeatures) (*wasm.Module, erro
 				break
 			}
 
-			// Now, either decode the NameSection or skip an unsupported one
+			// Now, either decode the NameSection or CustomSection
 			limit := sectionSize - nameSize
 			if name == "name" {
 				m.NameSection, err = decodeNameSection(r, uint64(limit))
 			} else {
-				// Note: Not Seek because it doesn't err when given an offset past EOF. Rather, it leads to undefined state.
-				if _, err = io.CopyN(io.Discard, r, int64(limit)); err != nil {
-					return nil, fmt.Errorf("failed to skip name[%s]: %w", name, err)
+				custom, err := decodeCustomSection(r, name, uint64(limit))
+				if err != nil {
+					return nil, fmt.Errorf("failed to read custom section name[%s]: %w", name, err)
 				}
+				m.CustomSections = append(m.CustomSections, custom)
 			}
 
 		case wasm.SectionIDType:
